@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mülakat Task</title>
+</head>
+<body>
+<h3>Select Files: </h3>
+<input type="file" id="encodedText"/> </br>
+<button onclick="decrypt()">Upload</button> <!-- Burada js e gidecek ve js txt dosyasındaki metni bir stringe atayıp controller a istek atacak-->
+<h3>Decrypted Text</h3>
+<div id="output"></div>
+<script>
+    function decrypt() {
+        const fileInput = document.getElementById('encodedText');
+        const file = fileInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                let fileContent = e.target.result;
+                console.log('dosya okundu:   ', fileContent);
+                sendToController(fileContent);
+            };
+
+            reader.readAsText(file);
+        } else {
+            console.error("Lütfen bir dosya seçin.");
+        }
+        const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+        function sendToController(content) {
+            fetch('/decrypt_con/decrypt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                },
+                body: JSON.stringify({
+                    encrypted_text: content,
+                    //key: 'manus'
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Şifre çözme başarısız oldu.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('output').innerHTML = '<p>' + data.decrypted_text + '</p>';
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                });
+        }
+    }
+</script>
+</body>
+</html>
